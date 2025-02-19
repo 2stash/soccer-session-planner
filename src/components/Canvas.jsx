@@ -7,11 +7,21 @@ import { FaRegCircle } from 'react-icons/fa';
 import './canvas.css';
 
 const Canvas = (props) => {
+  const [offsets, setOffsets] = useState({});
   const [elements, setElements] = useState([]);
   const [readyToDraw, setReadyToDraw] = useState(false);
   const [drawing, setDrawing] = useState(false);
   const [currentShape, setCurrentShape] = useState(null);
   const canvasRef = useRef(null);
+
+  const calculateOffsets = (canvas) => {
+    const canvas_offsets = canvas.getBoundingClientRect();
+    const updatedOffsets = {
+      offset_x: canvas_offsets.left,
+      offset_y: canvas_offsets.top,
+    };
+    setOffsets(updatedOffsets);
+  };
 
   const handleMouseDown = (event) => {
     console.log('handleMouseDown');
@@ -59,10 +69,17 @@ const Canvas = (props) => {
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
+    calculateOffsets(canvas);
     for (let element of elements) {
       context.beginPath();
 
-      context.arc(element.position.x, element.position.y, 50, 0, 2 * Math.PI);
+      context.arc(
+        element.position.x - offsets.offset_x,
+        element.position.y - offsets.offset_y,
+        50,
+        0,
+        2 * Math.PI
+      );
 
       context.stroke();
     }
@@ -71,8 +88,8 @@ const Canvas = (props) => {
       context.beginPath();
 
       context.arc(
-        currentShape.position.x,
-        currentShape.position.y,
+        currentShape.position.x - offsets.offset_x,
+        currentShape.position.y - offsets.offset_y,
         50,
         0,
         2 * Math.PI
