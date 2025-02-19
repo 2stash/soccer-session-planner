@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Shape, Circle, Triangle } from './classes/Shapes';
 import { FaRegHandPointer } from 'react-icons/fa6';
 import { FiArrowUpRight } from 'react-icons/fi';
 import { IoTriangleOutline } from 'react-icons/io5';
@@ -10,7 +11,7 @@ const Canvas = (props) => {
   const [offsets, setOffsets] = useState({});
   const [elements, setElements] = useState([]);
   const [readyToDraw, setReadyToDraw] = useState(false);
-  const [drawing, setDrawing] = useState(false);
+  const [currentShapeType, setCurrentShapeType] = useState(false);
   const [currentShape, setCurrentShape] = useState(null);
   const canvasRef = useRef(null);
 
@@ -29,31 +30,31 @@ const Canvas = (props) => {
       const { clientX, clientY } = event;
       console.log(currentShape);
       setElements([...elements, currentShape]);
-      setCurrentShape(create(clientX, clientY));
+      setCurrentShape(
+        new Shape({
+          position: { x: clientX, y: clientY },
+          shape: currentShapeType.shape,
+          color: currentShapeType.color,
+        })
+      );
     }
-  };
-
-  const create = (x, y) => {
-    return { position: { x, y } };
   };
 
   const handleMouseMove = (event) => {
     const { clientX, clientY } = event;
 
     if (readyToDraw) {
-      const currentShapePosition = { position: { x: clientX, y: clientY } };
+      const currentShapePosition = new Shape({
+        position: { x: clientX, y: clientY },
+        shape: currentShapeType.shape,
+        color: currentShapeType.color,
+      });
       setCurrentShape(currentShapePosition);
-    } else if (drawing) {
-      const currentShapeCopy = currentShape;
-      currentShapeCopy.position.x = clientX;
-      currentShapeCopy.position.y = clientY;
-      setCurrentShape(currentShapeCopy);
     }
   };
 
   const handleMouseUp = (event) => {
     console.log('handleMouseUp');
-    setDrawing(false);
   };
 
   const handleMouseOut = (event) => {
@@ -61,6 +62,14 @@ const Canvas = (props) => {
   };
 
   const handleShapeSelected = (value) => {
+    let shape;
+    if (value === 'circle') {
+      shape = new Circle();
+    } else if (value === 'triangle') {
+      shape = new Triangle();
+    }
+    setCurrentShapeType(shape);
+
     setReadyToDraw(true);
   };
 
@@ -71,31 +80,11 @@ const Canvas = (props) => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     calculateOffsets(canvas);
     for (let element of elements) {
-      context.beginPath();
-
-      context.arc(
-        element.position.x - offsets.offset_x,
-        element.position.y - offsets.offset_y,
-        50,
-        0,
-        2 * Math.PI
-      );
-
-      context.stroke();
+      element.draw(context, offsets);
     }
 
     if (currentShape) {
-      context.beginPath();
-
-      context.arc(
-        currentShape.position.x - offsets.offset_x,
-        currentShape.position.y - offsets.offset_y,
-        50,
-        0,
-        2 * Math.PI
-      );
-
-      context.stroke();
+      currentShape.draw(context, offsets);
     }
   }, [currentShape, elements]);
 
@@ -107,20 +96,25 @@ const Canvas = (props) => {
       </div>
       <div className='flex flex-row'>
         <div className='flex flex-col'>
-          <button className='btn-icon btn-white toolbutton'>
+          <button className='btn-icon btn-white toolbutton' id='move'>
             <FaRegHandPointer size={24} className='icon' />
           </button>
-          <button className='btn-icon btn-white toolbutton'>
+          <button
+            className='btn-icon btn-white toolbutton'
+            id='triangle'
+            onClick={() => handleShapeSelected('triangle')}
+          >
             <IoTriangleOutline size={32} color={'blue'} className='icon' />
           </button>
           <button
             className='btn-icon btn-white toolbutton'
+            id='circle'
             onClick={() => handleShapeSelected('circle')}
           >
             <FaRegCircle size={32} color={'red'} className='icon' />
           </button>
           <button className='btn-white toolbutton'>
-            <FiArrowUpRight size={48} className='icon' />
+            <FiArrowUpRight size={48} className='icon' id='arrow' />
           </button>
         </div>
         <canvas
