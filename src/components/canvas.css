@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+#canvas {
+  background: url('../assets/soccerField3.jpg');
+}
+
+.btn {
+  @apply font-semibold py-2 px-4;
+}
+
+.btn-icon {
+  @apply font-semibold;
+}
+
+.icon {
+  @apply justify-self-center;
+}
+
+.btn-white {
+  @apply bg-white text-gray-800 border border-gray-400 rounded shadow;
+}
+
+.btn-white:hover {
+  @apply bg-gray-100;
+}
+
+.toolbutton {
+  width: 50px;
+  height: 50px;
+}
