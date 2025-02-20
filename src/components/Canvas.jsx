@@ -1,16 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
-import { Shape, Circle, Triangle } from './classes/Shapes';
+import { Shape, Circle, Triangle, Arrow } from './classes/Shapes';
 import { FaRegHandPointer } from 'react-icons/fa6';
 import { FiArrowUpRight } from 'react-icons/fi';
 import { IoTriangleOutline } from 'react-icons/io5';
 import { FaRegCircle } from 'react-icons/fa';
+import { is_mouse_in_circle, draw } from '../utils/geometry';
 
 import './canvas.css';
 
 const Canvas = (props) => {
   const [offsets, setOffsets] = useState({});
   const [elements, setElements] = useState([]);
+  const [currentElementIndex, setCurrentElementIndex] = useState(null);
+  const [isMovingExistingShape, setIsMovingExistingShape] = useState(null);
+
   const [readyToDraw, setReadyToDraw] = useState(false);
+  const [drawingArrowEnd, setDrawingArrowEnd] = useState(false);
   const [currentShapeType, setCurrentShapeType] = useState(false);
   const [currentShape, setCurrentShape] = useState(null);
   const canvasRef = useRef(null);
@@ -26,39 +31,138 @@ const Canvas = (props) => {
 
   const handleMouseDown = (event) => {
     console.log('handleMouseDown');
+    const { clientX, clientY } = event;
+    const translatedX = clientX - offsets.offset_x;
+    const translatedY = clientY - offsets.offset_y;
     if (readyToDraw) {
-      const { clientX, clientY } = event;
-      console.log(currentShape);
+      if (currentShapeType.shape === 'arrow') {
+        if (currentShape === null) {
+          setCurrentShape(
+            new Shape({
+              position: {
+                startX: translatedX,
+                startY: translatedY,
+                endX: translatedX,
+                endY: translatedY,
+              },
+              shape: currentShapeType.shape,
+              color: currentShapeType.color,
+              radius: 10,
+            })
+          );
+          setDrawingArrowEnd(true);
+          setReadyToDraw(false);
+          return;
+        }
+      }
       setElements([...elements, currentShape]);
       setCurrentShape(
         new Shape({
-          position: { x: clientX, y: clientY },
+          position: { startX: translatedX, startY: translatedY },
           shape: currentShapeType.shape,
           color: currentShapeType.color,
         })
       );
+      return;
+    } else if (drawingArrowEnd) {
+      setElements([...elements, currentShape]);
+      setCurrentShape(null);
+      setReadyToDraw(true);
+      setDrawingArrowEnd(false);
+      return;
+    }
+
+    let startX = parseInt(translatedX);
+    let startY = parseInt(translatedY);
+    let index = 0;
+    for (let element of elements) {
+      if (element.shape === 'triangle' || element.shape == 'circle') {
+        if (is_mouse_in_circle(startX, startY, element)) {
+          console.log(element);
+          setCurrentElementIndex(index);
+          element.isMoving = true;
+          setIsMovingExistingShape(true);
+          // typeOfShapeMoving = shapes[current_shape_index].shape;
+          // populateInfoArea();
+          // draw_shapes();
+          return;
+        }
+      } else if (element.shape === 'arrow') {
+        // if (is_mouse_in_arrow(startX, startY, element)) {
+        //   current_shape_index = index;
+        //   element[current_shape_index].isMoving = true;
+        //   isDraggingExistingShape = true;
+        //   typeOfShapeMoving = 'arrow';
+        //   draw_shapes();
+        //   return;
+        // }
+      }
+      index++;
     }
   };
 
   const handleMouseMove = (event) => {
     const { clientX, clientY } = event;
-
+    const translatedX = clientX - offsets.offset_x;
+    const translatedY = clientY - offsets.offset_y;
     if (readyToDraw) {
+      if (currentShapeType.shape === 'arrow') {
+        return;
+      }
+
       const currentShapePosition = new Shape({
-        position: { x: clientX, y: clientY },
+        position: { startX: translatedX, startY: translatedY },
         shape: currentShapeType.shape,
         color: currentShapeType.color,
       });
       setCurrentShape(currentShapePosition);
+    } else if (drawingArrowEnd) {
+      setCurrentShape(
+        new Shape({
+          position: {
+            startX: currentShape.position.startX,
+            startY: currentShape.position.startY,
+            endX: translatedX,
+            endY: translatedY,
+          },
+          shape: currentShapeType.shape,
+          color: currentShapeType.color,
+          radius: 10,
+        })
+      );
+    } else if (isMovingExistingShape) {
+      console.log('setIsMovingExistingShape');
+      console.log(currentElementIndex);
+      setElements((prevItems) =>
+        prevItems.map((item, idx) => {
+          if (idx === currentElementIndex) {
+            return {
+              ...item,
+              position: {
+                ...item.position,
+                startX: translatedX,
+                startY: translatedY,
+              },
+            };
+          }
+          return item;
+        })
+      );
     }
   };
-
   const handleMouseUp = (event) => {
-    console.log('handleMouseUp');
+    setIsMovingExistingShape(false);
   };
 
-  const handleMouseOut = (event) => {
-    console.log('handleMouseOut');
+  const handleMouseOut = (event) => {};
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      setReadyToDraw(false);
+      setCurrentShapeType(null);
+      setCurrentShape(null);
+    }
+    console.log(event.key);
   };
 
   const handleShapeSelected = (value) => {
@@ -67,9 +171,10 @@ const Canvas = (props) => {
       shape = new Circle();
     } else if (value === 'triangle') {
       shape = new Triangle();
+    } else if (value === 'arrow') {
+      shape = new Arrow();
     }
     setCurrentShapeType(shape);
-
     setReadyToDraw(true);
   };
 
@@ -79,13 +184,20 @@ const Canvas = (props) => {
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
     calculateOffsets(canvas);
+
+    window.addEventListener('keydown', handleKeyDown);
+
     for (let element of elements) {
-      element.draw(context, offsets);
+      draw(element, context);
     }
 
     if (currentShape) {
-      currentShape.draw(context, offsets);
+      currentShape.draw(context);
     }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [currentShape, elements]);
 
   return (
@@ -114,7 +226,12 @@ const Canvas = (props) => {
             <FaRegCircle size={32} color={'red'} className='icon' />
           </button>
           <button className='btn-white toolbutton'>
-            <FiArrowUpRight size={48} className='icon' id='arrow' />
+            <FiArrowUpRight
+              size={48}
+              className='icon'
+              id='arrow'
+              onClick={() => handleShapeSelected('arrow')}
+            />
           </button>
         </div>
         <canvas
