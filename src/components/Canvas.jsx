@@ -4,13 +4,14 @@ import { FaRegHandPointer } from 'react-icons/fa6';
 import { FiArrowUpRight } from 'react-icons/fi';
 import { IoTriangleOutline } from 'react-icons/io5';
 import { FaRegCircle } from 'react-icons/fa';
-import { is_mouse_in_circle, draw } from '../utils/geometry';
+import { is_mouse_in_circle, is_mouse_in_arrow, draw } from '../utils/geometry';
 
 import './canvas.css';
 
 const Canvas = (props) => {
   const [offsets, setOffsets] = useState({});
   const [elements, setElements] = useState([]);
+  const [prevCordinates, setPrevCordinates] = useState(null);
   const [currentElementIndex, setCurrentElementIndex] = useState(null);
   const [isMovingExistingShape, setIsMovingExistingShape] = useState(null);
 
@@ -32,8 +33,9 @@ const Canvas = (props) => {
   const handleMouseDown = (event) => {
     console.log('handleMouseDown');
     const { clientX, clientY } = event;
-    const translatedX = clientX - offsets.offset_x;
-    const translatedY = clientY - offsets.offset_y;
+    const translatedX = parseInt(clientX - offsets.offset_x);
+    const translatedY = parseInt(clientY - offsets.offset_y);
+    setPrevCordinates({ position: { x: translatedX, y: translatedY } });
     if (readyToDraw) {
       if (currentShapeType.shape === 'arrow') {
         if (currentShape === null) {
@@ -82,20 +84,16 @@ const Canvas = (props) => {
           setCurrentElementIndex(index);
           element.isMoving = true;
           setIsMovingExistingShape(true);
-          // typeOfShapeMoving = shapes[current_shape_index].shape;
-          // populateInfoArea();
-          // draw_shapes();
           return;
         }
       } else if (element.shape === 'arrow') {
-        // if (is_mouse_in_arrow(startX, startY, element)) {
-        //   current_shape_index = index;
-        //   element[current_shape_index].isMoving = true;
-        //   isDraggingExistingShape = true;
-        //   typeOfShapeMoving = 'arrow';
-        //   draw_shapes();
-        //   return;
-        // }
+        if (is_mouse_in_arrow(startX, startY, element)) {
+          console.log(element);
+          setCurrentElementIndex(index);
+          element.isMoving = true;
+          setIsMovingExistingShape(true);
+          return;
+        }
       }
       index++;
     }
@@ -103,8 +101,8 @@ const Canvas = (props) => {
 
   const handleMouseMove = (event) => {
     const { clientX, clientY } = event;
-    const translatedX = clientX - offsets.offset_x;
-    const translatedY = clientY - offsets.offset_y;
+    const translatedX = parseInt(clientX - offsets.offset_x);
+    const translatedY = parseInt(clientY - offsets.offset_y);
     if (readyToDraw) {
       if (currentShapeType.shape === 'arrow') {
         return;
@@ -130,9 +128,10 @@ const Canvas = (props) => {
           radius: 10,
         })
       );
-    } else if (isMovingExistingShape) {
-      console.log('setIsMovingExistingShape');
-      console.log(currentElementIndex);
+    } else if (
+      isMovingExistingShape &&
+      elements[currentElementIndex].shape !== 'arrow'
+    ) {
       setElements((prevItems) =>
         prevItems.map((item, idx) => {
           if (idx === currentElementIndex) {
@@ -148,7 +147,32 @@ const Canvas = (props) => {
           return item;
         })
       );
+    } else if (
+      isMovingExistingShape &&
+      elements[currentElementIndex].shape === 'arrow'
+    ) {
+      const dx = translatedX - prevCordinates.position.x;
+      const dy = translatedY - prevCordinates.position.y;
+
+      setElements((prevItems) =>
+        prevItems.map((item, idx) => {
+          if (idx === currentElementIndex) {
+            return {
+              ...item,
+              position: {
+                ...item.position,
+                startX: item.position.startX + dx,
+                startY: item.position.startY + dy,
+                endX: item.position.endX + dx,
+                endY: item.position.endY + dy,
+              },
+            };
+          }
+          return item;
+        })
+      );
     }
+    setPrevCordinates({ position: { x: translatedX, y: translatedY } });
   };
   const handleMouseUp = (event) => {
     setIsMovingExistingShape(false);
