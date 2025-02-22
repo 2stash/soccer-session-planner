@@ -43,6 +43,9 @@ export function draw(element, context) {
   const currentX = element.position.startX;
   const currentY = element.position.startY;
   if (element.shape === 'circle') {
+    if (element.isMoving) {
+      drawMoving(context, currentX, currentY, element.radius);
+    }
     context.beginPath();
 
     context.arc(currentX, currentY, element.radius, 0, 2 * Math.PI);
@@ -53,6 +56,9 @@ export function draw(element, context) {
     context.fillStyle = 'white';
     context.fillText(element.number, currentX - 10, currentY + 10);
   } else if (element.shape === 'triangle') {
+    if (element.isMoving) {
+      drawMoving(context, currentX, currentY, element.radius);
+    }
     context.beginPath();
     context.moveTo(currentX, currentY - 25);
     context.lineTo(currentX - 25, currentY + 25);
@@ -65,6 +71,9 @@ export function draw(element, context) {
     context.fillStyle = 'white';
     context.fillText(element.number, currentX - 8, currentY + 18);
   } else if (element.shape === 'arrow') {
+    if (element.isMoving) {
+      drawMovingArrow(context, element);
+    }
     const x_center = element.position.endX;
     const y_center = element.position.endY;
 
@@ -109,4 +118,28 @@ export function draw(element, context) {
 
     context.fill();
   }
+}
+
+function drawMoving(context, currentX, currentY, radius) {
+  console.log('ismoving');
+  context.beginPath();
+  context.strokeStyle = 'rgba(0,221,245,.5)';
+
+  context.rect(currentX - radius - 5, currentY - radius - 5, 60, 60);
+  context.stroke();
+}
+
+function drawMovingArrow(context, element) {
+  let xLength = Math.abs(element.position.startX - element.position.endX);
+  let yLength = Math.abs(element.position.startY - element.position.endY);
+  context.beginPath();
+  context.strokeStyle = 'rgba(0,221,245,.5)';
+
+  context.rect(
+    (element.position.startX + element.position.endX) / 2 - (30 + xLength) / 2,
+    (element.position.startY + element.position.endY) / 2 - (30 + yLength) / 2,
+    xLength + 30,
+    yLength + 30
+  );
+  context.stroke();
 }

@@ -77,25 +77,34 @@ const Canvas = (props) => {
     let startX = parseInt(translatedX);
     let startY = parseInt(translatedY);
     let index = 0;
+    let isMoving = false;
     for (let element of elements) {
       if (element.shape === 'triangle' || element.shape == 'circle') {
         if (is_mouse_in_circle(startX, startY, element)) {
-          console.log(element);
           setCurrentElementIndex(index);
-          element.isMoving = true;
           setIsMovingExistingShape(true);
-          return;
+          isMoving = true;
+          break;
         }
       } else if (element.shape === 'arrow') {
         if (is_mouse_in_arrow(startX, startY, element)) {
-          console.log(element);
           setCurrentElementIndex(index);
-          element.isMoving = true;
           setIsMovingExistingShape(true);
-          return;
+          isMoving = true;
+          break;
         }
       }
       index++;
+    }
+    if (isMoving) {
+      const update = elements.map((prevElement, idx) => {
+        if (index === idx) {
+          return { ...prevElement, isMoving: true };
+        } else {
+          return prevElement;
+        }
+      });
+      setElements(update);
     }
   };
 
@@ -203,7 +212,6 @@ const Canvas = (props) => {
   };
 
   useEffect(() => {
-    console.log('rerender');
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
