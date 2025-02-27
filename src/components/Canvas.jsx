@@ -73,7 +73,6 @@ const Canvas = (props) => {
       setDrawingArrowEnd(false);
       return;
     }
-
     let startX = parseInt(translatedX);
     let startY = parseInt(translatedY);
     let index = 0;
@@ -101,10 +100,12 @@ const Canvas = (props) => {
         if (index === idx) {
           return { ...prevElement, isMoving: true };
         } else {
-          return prevElement;
+          return { ...prevElement, isMoving: false };
         }
       });
       setElements(update);
+    } else {
+      resetMoveState();
     }
   };
 
@@ -184,7 +185,9 @@ const Canvas = (props) => {
     setPrevCordinates({ position: { x: translatedX, y: translatedY } });
   };
   const handleMouseUp = (event) => {
-    setIsMovingExistingShape(false);
+    if (isMovingExistingShape) {
+      setIsMovingExistingShape(false);
+    }
   };
 
   const handleMouseOut = (event) => {};
@@ -194,6 +197,7 @@ const Canvas = (props) => {
       setReadyToDraw(false);
       setCurrentShapeType(null);
       setCurrentShape(null);
+      resetMoveState();
     }
     console.log(event.key);
   };
@@ -211,6 +215,20 @@ const Canvas = (props) => {
     setReadyToDraw(true);
   };
 
+  const resetMoveState = () => {
+    setElements((prevItems) =>
+      prevItems.map((item, idx) => {
+        if (idx === currentElementIndex) {
+          return {
+            ...item,
+            isMoving: false,
+          };
+        }
+        return item;
+      })
+    );
+    setCurrentElementIndex(null);
+  };
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
