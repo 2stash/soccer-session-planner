@@ -242,7 +242,7 @@ const Canvas = (props) => {
     }
 
     if (currentShape) {
-      currentShape.draw(context);
+      draw(currentShape, context);
     }
 
     return () => {
