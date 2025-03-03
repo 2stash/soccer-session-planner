@@ -9,8 +9,14 @@ import { is_mouse_in_circle, is_mouse_in_arrow, draw } from '../utils/geometry';
 import './canvas.css';
 
 const Canvas = (props) => {
-  const [offsets, setOffsets] = useState({});
+  const [dataLoaded, setDataLoaded] = useState(true);
+  const [sessionData, setSessionData] = useState([]);
+  const [metadata, setMetadata] = useState({ name: 'hi' });
   const [elements, setElements] = useState([]);
+  // const [availableSessions, setAvailableSessions] = useState([]);
+  const [currentSessionIdx, setCurrentSessionIdx] = useState(0);
+
+  const [offsets, setOffsets] = useState({});
   const [prevCordinates, setPrevCordinates] = useState(null);
   const [currentElementIndex, setCurrentElementIndex] = useState(null);
   const [isMovingExistingShape, setIsMovingExistingShape] = useState(null);
@@ -21,16 +27,90 @@ const Canvas = (props) => {
   const [currentShape, setCurrentShape] = useState(null);
   const canvasRef = useRef(null);
 
-  useEffect(() => {
-    const localData = JSON.parse(localStorage.getItem('soccer-planner'));
-    if (localData) {
-      setElements(localData);
+  const saveData = () => {
+    let data;
+    console.log('sessionData ', sessionData);
+    if (sessionData.length > 0) {
+      data = sessionData.map((item, idx) => {
+        console.log(idx, currentSessionIdx);
+        if (idx === currentSessionIdx) {
+          return { elements, metadata };
+        } else {
+          return item;
+        }
+      });
+    } else {
+      data = [{ metadata, elements }];
     }
+    setSessionData(data);
+    console.log('saving data, ', data);
+    localStorage.setItem('soccer-planner', JSON.stringify(data));
+  };
+
+  const handleCurrentSessionIdxChange = (idx) => {
+    console.log(idx);
+    setCurrentSessionIdx(idx);
+    setElements(sessionData[idx].elements);
+    setMetadata(sessionData[idx].metadata);
+  };
+
+  useEffect(() => {
+    // localStorage.removeItem('soccer-planner');
+
+    const localData = JSON.parse(localStorage.getItem('soccer-planner'));
+    console.log('localData ', localData);
+    let tempMetadata;
+    if (localData) {
+      const data = localData;
+      console.log('fetch and set localdata', data);
+      if (data[currentSessionIdx]) {
+        tempMetadata = data[currentSessionIdx];
+      } else {
+        tempMetadata = { name: 'fake news' };
+      }
+      setMetadata(tempMetadata);
+      setElements(data[currentSessionIdx].elements);
+      setSessionData(data);
+    }
+    setDataLoaded(true);
   }, []);
 
-  const saveData = () => {
-    localStorage.setItem('soccer-planner', JSON.stringify(elements));
-    console.log('save');
+  useEffect(() => {
+    console.log('RELOADED', currentSessionIdx);
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    calculateOffsets(canvas);
+
+    window.addEventListener('keydown', handleKeyDown);
+    if (dataLoaded) {
+      for (let element of elements) {
+        draw(element, context);
+      }
+
+      if (currentShape) {
+        draw(currentShape, context);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentShape, elements, currentSessionIdx]);
+
+  const clearLocalStorage = () => {
+    localStorage.removeItem('soccer-planner');
+    setElements([]);
+  };
+
+  const createNewSession = () => {
+    // saveData();
+    const data = { elements: [], metadata: { name: 'New Session' } };
+    console.log('createNewSession, ', sessionData);
+    setSessionData((prev) => [...prev, data]);
+    setElements([]);
+    setMetadata('');
+    setCurrentSessionIdx(currentSessionIdx + 1);
   };
 
   const calculateOffsets = (canvas) => {
@@ -241,72 +321,78 @@ const Canvas = (props) => {
     );
     setCurrentElementIndex(null);
   };
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    calculateOffsets(canvas);
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    for (let element of elements) {
-      draw(element, context);
-    }
-
-    if (currentShape) {
-      draw(currentShape, context);
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [currentShape, elements]);
 
   return (
     <div>
-      <div id='savebar' className='mb-2'>
-        <button className='btn btn-white'>Clear</button>
-        <button className='btn btn-white ml-4' onClick={saveData}>
-          Save
-        </button>
+      <div className='h-16'>
+        {/* <h2>{metadata ? metadata.name : 'New Session'}</h2> */}
       </div>
-      <div className='flex flex-row'>
-        <div className='flex flex-col'>
-          <button className='btn-icon btn-white toolbutton' id='move'>
-            <FaRegHandPointer size={24} className='icon' />
-          </button>
-          <button
-            className='btn-icon btn-white toolbutton'
-            id='triangle'
-            onClick={() => handleShapeSelected('triangle')}
-          >
-            <IoTriangleOutline size={32} color={'blue'} className='icon' />
-          </button>
-          <button
-            className='btn-icon btn-white toolbutton'
-            id='circle'
-            onClick={() => handleShapeSelected('circle')}
-          >
-            <FaRegCircle size={32} color={'red'} className='icon' />
-          </button>
-          <button className='btn-white toolbutton'>
-            <FiArrowUpRight
-              size={48}
-              className='icon'
-              id='arrow'
-              onClick={() => handleShapeSelected('arrow')}
-            />
-          </button>
+
+      {/* Drawing Section */}
+      <div id='overall' className='flex'>
+        <div className='w-48 bg-slate-100'>
+          {sessionData.map((item, idx) => (
+            <button
+              key={idx}
+              className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded btn-block w-full'
+              type='button'
+              onClick={() => handleCurrentSessionIdxChange(idx)}
+            >
+              {item.metadata.name} Names
+            </button>
+          ))}
         </div>
-        <canvas
-          id='canvas'
-          ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseOut={handleMouseOut}
-          {...props}
-        />
+        <div id='drawing'>
+          <div id='drawing-savebar' className='mb-2'>
+            <button className='btn btn-white' onClick={clearLocalStorage}>
+              Delete Localstorage Data
+            </button>
+            <button className='btn btn-white ml-4' onClick={createNewSession}>
+              Create New Session
+            </button>
+            <button className='btn btn-white ml-4' onClick={saveData}>
+              Save
+            </button>
+          </div>
+          <div id='drawing-canvas' className='flex flex-row'>
+            <div className='flex flex-col'>
+              <button className='btn-icon btn-white toolbutton' id='move'>
+                <FaRegHandPointer size={24} className='icon' />
+              </button>
+              <button
+                className='btn-icon btn-white toolbutton'
+                id='triangle'
+                onClick={() => handleShapeSelected('triangle')}
+              >
+                <IoTriangleOutline size={32} color={'blue'} className='icon' />
+              </button>
+              <button
+                className='btn-icon btn-white toolbutton'
+                id='circle'
+                onClick={() => handleShapeSelected('circle')}
+              >
+                <FaRegCircle size={32} color={'red'} className='icon' />
+              </button>
+              <button className='btn-white toolbutton'>
+                <FiArrowUpRight
+                  size={48}
+                  className='icon'
+                  id='arrow'
+                  onClick={() => handleShapeSelected('arrow')}
+                />
+              </button>
+            </div>
+            <canvas
+              id='canvas'
+              ref={canvasRef}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseOut={handleMouseOut}
+              {...props}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
