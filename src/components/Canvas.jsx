@@ -21,6 +21,18 @@ const Canvas = (props) => {
   const [currentShape, setCurrentShape] = useState(null);
   const canvasRef = useRef(null);
 
+  useEffect(() => {
+    const localData = JSON.parse(localStorage.getItem('soccer-planner'));
+    if (localData) {
+      setElements(localData);
+    }
+  }, []);
+
+  const saveData = () => {
+    localStorage.setItem('soccer-planner', JSON.stringify(elements));
+    console.log('save');
+  };
+
   const calculateOffsets = (canvas) => {
     const canvas_offsets = canvas.getBoundingClientRect();
     const updatedOffsets = {
@@ -254,7 +266,9 @@ const Canvas = (props) => {
     <div>
       <div id='savebar' className='mb-2'>
         <button className='btn btn-white'>Clear</button>
-        <button className='btn btn-white ml-4'>Save</button>
+        <button className='btn btn-white ml-4' onClick={saveData}>
+          Save
+        </button>
       </div>
       <div className='flex flex-row'>
         <div className='flex flex-col'>
