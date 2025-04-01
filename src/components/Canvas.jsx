@@ -14,7 +14,6 @@ const Canvas = (props) => {
   const [sessionData, setSessionData] = useState([]);
   const [metadata, setMetadata] = useState({ name: 'hi' });
   const [elements, setElements] = useState([]);
-  // const [availableSessions, setAvailableSessions] = useState([]);
   const [currentSessionIdx, setCurrentSessionIdx] = useState(0);
 
   const [offsets, setOffsets] = useState({});
@@ -103,7 +102,7 @@ const Canvas = (props) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentShape, elements, currentSessionIdx]);
+  }, [currentShape, elements, currentSessionIdx, sessionData]);
 
   const clearLocalStorage = () => {
     localStorage.removeItem('soccer-planner');
@@ -316,6 +315,18 @@ const Canvas = (props) => {
     }
   };
 
+  const handleDeleteSession = () => {
+    setSessionData((prevData) =>
+      prevData.filter((session, idx) => currentSessionIdx !== idx)
+    );
+    handleCurrentSessionIdxChange(0);
+
+    // const [sessionData, setSessionData] = useState([]);
+    // const [metadata, setMetadata] = useState({ name: 'hi' });
+    // const [elements, setElements] = useState([]);
+    // const [currentSessionIdx, setCurrentSessionIdx] = useState(0);
+  };
+
   const handleShapeSelected = (value) => {
     let shape;
     if (value === 'circle') {
@@ -420,6 +431,13 @@ const Canvas = (props) => {
               {...props}
             />
           </div>
+        </div>
+
+        {/* Session section */}
+        <div className='bg-red-300 w-48'>
+          <button className='btn btn-white' onClick={handleDeleteSession}>
+            Delete Session
+          </button>
         </div>
       </div>
     </div>
