@@ -3,8 +3,6 @@ export function is_mouse_in_circle(x, y, shape) {
   let shape_right = shape.position.startX + shape.radius;
   let shape_top = shape.position.startY - shape.radius;
   let shape_bottom = shape.position.startY + shape.radius;
-  console.log(shape_left, x, shape_right);
-  console.log(shape_bottom, y, shape_top);
   if (x > shape_left && x < shape_right && y > shape_top && y < shape_bottom) {
     return true;
   }
@@ -121,7 +119,6 @@ export function draw(element, context) {
 }
 
 function drawMoving(context, currentX, currentY, radius) {
-  console.log('ismoving');
   context.beginPath();
   context.strokeStyle = 'rgba(0,221,245,.5)';
 

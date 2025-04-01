@@ -4,12 +4,13 @@ import { FaRegHandPointer } from 'react-icons/fa6';
 import { FiArrowUpRight } from 'react-icons/fi';
 import { IoTriangleOutline } from 'react-icons/io5';
 import { FaRegCircle } from 'react-icons/fa';
+import { FaRegTrashCan } from 'react-icons/fa6';
 import { is_mouse_in_circle, is_mouse_in_arrow, draw } from '../utils/geometry';
 
 import './canvas.css';
 
 const Canvas = (props) => {
-  const [dataLoaded, setDataLoaded] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [sessionData, setSessionData] = useState([]);
   const [metadata, setMetadata] = useState({ name: 'hi' });
   const [elements, setElements] = useState([]);
@@ -76,7 +77,13 @@ const Canvas = (props) => {
   }, []);
 
   useEffect(() => {
-    console.log('RELOADED', currentSessionIdx);
+    console.log(
+      'RELOADED: ',
+      'currentSessionIdx = ',
+      currentSessionIdx,
+      ' currentElementIndex = ',
+      currentElementIndex
+    );
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -123,7 +130,6 @@ const Canvas = (props) => {
   };
 
   const handleMouseDown = (event) => {
-    console.log('handleMouseDown');
     const { clientX, clientY } = event;
     const translatedX = parseInt(clientX - offsets.offset_x);
     const translatedY = parseInt(clientY - offsets.offset_y);
@@ -290,8 +296,24 @@ const Canvas = (props) => {
       setCurrentShapeType(null);
       setCurrentShape(null);
       resetMoveState();
+    } else if (
+      event.key === 'Delete' ||
+      (event.key === 'Backspace' && currentElementIndex !== null)
+    ) {
+      handleDeleteElement();
+      console.log(currentElementIndex);
     }
-    console.log(event.key);
+  };
+
+  const handleDeleteElement = () => {
+    if (currentElementIndex !== null) {
+      setElements((prevItems) =>
+        prevItems.filter((item, idx) => idx !== currentElementIndex)
+      );
+      setReadyToDraw(false);
+      setCurrentShapeType(null);
+      setCurrentShape(null);
+    }
   };
 
   const handleShapeSelected = (value) => {
@@ -343,7 +365,7 @@ const Canvas = (props) => {
           ))}
         </div>
         <div id='drawing'>
-          <div id='drawing-savebar' className='mb-2'>
+          <div id='drawing-savebar' className='flex mb-2 justify-left'>
             <button className='btn btn-white' onClick={clearLocalStorage}>
               Delete Localstorage Data
             </button>
@@ -352,6 +374,12 @@ const Canvas = (props) => {
             </button>
             <button className='btn btn-white ml-4' onClick={saveData}>
               Save
+            </button>
+            <button
+              className='btn-icon btn-white toolbutton ml-4'
+              onClick={handleDeleteElement}
+            >
+              <FaRegTrashCan size={24} className='icon' />
             </button>
           </div>
           <div id='drawing-canvas' className='flex flex-row'>
