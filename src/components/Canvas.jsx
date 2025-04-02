@@ -28,11 +28,12 @@ const Canvas = (props) => {
 
   const canvasRef = useRef(null);
 
-  const saveData = (newData = null) => {
-    let data;
+  const saveData = ({ data }) => {
     console.log('sessionData ', sessionData);
-    if (newData != null) {
-      setSessionData(newData);
+    if (data !== undefined) {
+      console.log('if = ', data);
+      setSessionData(data);
+      localStorage.setItem('soccer-planner', JSON.stringify(data));
       return;
     } else if (sessionData.length > 0) {
       data = sessionData.map((item, idx) => {
@@ -67,10 +68,8 @@ const Canvas = (props) => {
 
     console.log('fetch and set localdata', localData);
     if (localData) {
-      console.log('if');
       tempMetadata = localData;
     } else {
-      console.log('else');
       tempMetadata = [{ elements: [], metadata: { name: 'New Session' } }];
     }
     console.log('session data =', tempMetadata);
@@ -332,11 +331,10 @@ const Canvas = (props) => {
   };
 
   const handleDeleteSession = () => {
-    const newData = sessionData.filter(
+    const data = sessionData.filter(
       (session, idx) => currentSessionIdx !== idx
     );
-
-    setSessionData(newData);
+    setSessionData(data);
     if (sessionData.length >= 2) {
       setMetadata(sessionData[0].metadata);
       setElements(sessionData[0].elements);
@@ -344,7 +342,7 @@ const Canvas = (props) => {
     }
 
     // drawShapes();
-    saveData(newData);
+    saveData({ data });
   };
 
   const handleShapeSelected = (value) => {
