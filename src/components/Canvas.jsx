@@ -34,6 +34,17 @@ const Canvas = (props) => {
     { name: 'Activity 2' },
   ];
 
+  const baseDataExample = [
+    {
+      activities: [
+        { name: 'Warmup', elements: [] },
+        { name: 'Activity 1', elements: [] },
+        { name: 'Activity 2', elements: [] },
+      ],
+      metadata: { name: 'New Session' },
+    },
+  ];
+
   const saveData = ({ data }) => {
     console.log('sessionData ', sessionData);
     if (data !== undefined) {
