@@ -28,6 +28,12 @@ const Canvas = (props) => {
 
   const canvasRef = useRef(null);
 
+  const tempActivities = [
+    { name: 'Warmup' },
+    { name: 'Activity 1' },
+    { name: 'Activity 2' },
+  ];
+
   const saveData = ({ data }) => {
     console.log('sessionData ', sessionData);
     if (data !== undefined) {
@@ -124,14 +130,18 @@ const Canvas = (props) => {
 
   const createNewSession = () => {
     // saveData();
-    const data = {
-      elements: [],
-      metadata: { name: `New Session ${currentSessionIdx + 1}` },
-    };
-    setSessionData((prev) => [...prev, data]);
+    const data = [
+      ...sessionData,
+      {
+        elements: [],
+        metadata: { name: `New Session ${currentSessionIdx + 1}` },
+      },
+    ];
+    setSessionData(data);
     setElements([]);
     setMetadata({ name: `New Session ${currentSessionIdx + 1}` });
     setCurrentSessionIdx(currentSessionIdx + 1);
+    saveData({ data });
   };
 
   const calculateOffsets = (canvas) => {
@@ -331,17 +341,14 @@ const Canvas = (props) => {
   };
 
   const handleDeleteSession = () => {
-    const data = sessionData.filter(
-      (session, idx) => currentSessionIdx !== idx
-    );
+    let data = sessionData.filter((session, idx) => currentSessionIdx !== idx);
     setSessionData(data);
-    if (sessionData.length >= 2) {
-      setMetadata(sessionData[0].metadata);
-      setElements(sessionData[0].elements);
-      handleCurrentSessionIdxChange(0);
+    if (data.length === 0) {
+      data = [{ elements: [], metadata: { name: 'New Session' } }];
     }
-
-    // drawShapes();
+    setMetadata(sessionData[0].metadata);
+    setElements(sessionData[0].elements);
+    handleCurrentSessionIdxChange(0);
     saveData({ data });
   };
 
@@ -459,20 +466,42 @@ const Canvas = (props) => {
         </div>
 
         {/* Session section */}
-        <div className='bg-red-300 w-48 flex flex-col justify-start'>
-          <div>
-            {metadata && (
-              <input
-                type='text'
-                value={metadata.name}
-                onChange={(e) => handleUpdateMetadata(e)}
-                className='h-14'
-                placeholder='No Session Selected'
-              />
-            )}
+        <div className='w-72 flex flex-col rounded-sm border border-slate-400'>
+          <div className='flex flex-col grow'>
+            <div className='flex flex-col'>
+              <label htmlFor='name' className='items-center text-3xl m-2'>
+                Session Title
+              </label>
+              {metadata && (
+                <input
+                  type='text'
+                  value={metadata.name}
+                  onChange={(e) => handleUpdateMetadata(e)}
+                  className='m-2 p-2 h-10 border-bottom rounded-sm bg-gray-100'
+                  placeholder='No Session Selected'
+                  name='name'
+                />
+              )}
+            </div>
+
+            <div className='mt-8'>
+              <h2>Session Activities</h2>
+              <div className='flex flex-col'>
+                {tempActivities.map((activity) => (
+                  <button key={activity.name} className='btn btn-white'>
+                    {activity.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-          <button className='btn btn-white' onClick={handleDeleteSession}>
+
+          <button
+            className='btn bg-red-500 hover:bg-red-700 m-2 text-white'
+            onClick={handleDeleteSession}
+          >
             Delete Session
+            {/* TODO: Add deletion check for production */}
           </button>
         </div>
       </div>
