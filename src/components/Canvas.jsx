@@ -11,9 +11,9 @@ import './canvas.css';
 
 const Canvas = (props) => {
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [sessionData, setSessionData] = useState([]);
-  const [metadata, setMetadata] = useState({ name: 'hi' });
-  const [elements, setElements] = useState([]);
+  const [sessionData, setSessionData] = useState(null);
+  const [metadata, setMetadata] = useState(null);
+  const [elements, setElements] = useState(null);
   const [currentSessionIdx, setCurrentSessionIdx] = useState(0);
 
   const [offsets, setOffsets] = useState({});
@@ -25,12 +25,16 @@ const Canvas = (props) => {
   const [drawingArrowEnd, setDrawingArrowEnd] = useState(false);
   const [currentShapeType, setCurrentShapeType] = useState(false);
   const [currentShape, setCurrentShape] = useState(null);
+
   const canvasRef = useRef(null);
 
-  const saveData = () => {
+  const saveData = (newData = null) => {
     let data;
     console.log('sessionData ', sessionData);
-    if (sessionData.length > 0) {
+    if (newData != null) {
+      setSessionData(newData);
+      return;
+    } else if (sessionData.length > 0) {
       data = sessionData.map((item, idx) => {
         console.log(idx, currentSessionIdx);
         if (idx === currentSessionIdx) {
@@ -40,7 +44,7 @@ const Canvas = (props) => {
         }
       });
     } else {
-      data = [{ metadata, elements }];
+      data = { metadata, elements };
     }
     setSessionData(data);
     console.log('saving data, ', data);
@@ -60,22 +64,32 @@ const Canvas = (props) => {
     const localData = JSON.parse(localStorage.getItem('soccer-planner'));
     console.log('localData ', localData);
     let tempMetadata;
+
+    console.log('fetch and set localdata', localData);
     if (localData) {
-      const data = localData;
-      console.log('fetch and set localdata', data);
-      if (data[currentSessionIdx]) {
-        tempMetadata = data[currentSessionIdx];
-      } else {
-        tempMetadata = { name: 'fake news' };
-      }
-      setMetadata(tempMetadata);
-      setElements(data[currentSessionIdx].elements);
-      setSessionData(data);
+      console.log('if');
+      tempMetadata = localData;
+    } else {
+      console.log('else');
+      tempMetadata = [{ elements: [], metadata: { name: 'New Session' } }];
     }
+    console.log('session data =', tempMetadata);
+    setCurrentSessionIdx(0);
+    setMetadata(tempMetadata[currentSessionIdx].metadata);
+    setElements(tempMetadata[currentSessionIdx].elements);
+    setSessionData(tempMetadata);
     setDataLoaded(true);
   }, []);
 
   useEffect(() => {
+    drawShapes();
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentShape, elements, currentSessionIdx, sessionData]);
+
+  const drawShapes = () => {
     console.log(
       'RELOADED: ',
       'currentSessionIdx = ',
@@ -88,7 +102,6 @@ const Canvas = (props) => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     calculateOffsets(canvas);
 
-    window.addEventListener('keydown', handleKeyDown);
     if (dataLoaded) {
       for (let element of elements) {
         draw(element, context);
@@ -98,24 +111,27 @@ const Canvas = (props) => {
         draw(currentShape, context);
       }
     }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [currentShape, elements, currentSessionIdx, sessionData]);
+  };
 
   const clearLocalStorage = () => {
     localStorage.removeItem('soccer-planner');
-    setElements([]);
+    const tempData = [{ elements: [], metadata: { name: 'New Session' } }];
+    setCurrentSessionIdx(0);
+    setMetadata(tempData[currentSessionIdx].metadata);
+    setElements(tempData[currentSessionIdx].elements);
+    setSessionData(tempData);
+    setDataLoaded(true);
   };
 
   const createNewSession = () => {
     // saveData();
-    const data = { elements: [], metadata: { name: 'New Session' } };
-    console.log('createNewSession, ', sessionData);
+    const data = {
+      elements: [],
+      metadata: { name: `New Session ${currentSessionIdx + 1}` },
+    };
     setSessionData((prev) => [...prev, data]);
     setElements([]);
-    setMetadata('');
+    setMetadata({ name: `New Session ${currentSessionIdx + 1}` });
     setCurrentSessionIdx(currentSessionIdx + 1);
   };
 
@@ -316,15 +332,19 @@ const Canvas = (props) => {
   };
 
   const handleDeleteSession = () => {
-    setSessionData((prevData) =>
-      prevData.filter((session, idx) => currentSessionIdx !== idx)
+    const newData = sessionData.filter(
+      (session, idx) => currentSessionIdx !== idx
     );
-    handleCurrentSessionIdxChange(0);
 
-    // const [sessionData, setSessionData] = useState([]);
-    // const [metadata, setMetadata] = useState({ name: 'hi' });
-    // const [elements, setElements] = useState([]);
-    // const [currentSessionIdx, setCurrentSessionIdx] = useState(0);
+    setSessionData(newData);
+    if (sessionData.length >= 2) {
+      setMetadata(sessionData[0].metadata);
+      setElements(sessionData[0].elements);
+      handleCurrentSessionIdxChange(0);
+    }
+
+    // drawShapes();
+    saveData(newData);
   };
 
   const handleShapeSelected = (value) => {
@@ -355,25 +375,32 @@ const Canvas = (props) => {
     setCurrentElementIndex(null);
   };
 
+  const handleUpdateMetadata = (e) => {
+    const name = e.target.value;
+    setMetadata({ name });
+  };
+
   return (
     <div>
-      <div className='h-16'>
-        {/* <h2>{metadata ? metadata.name : 'New Session'}</h2> */}
-      </div>
+      <div className='h-16'></div>
 
       {/* Drawing Section */}
       <div id='overall' className='flex'>
         <div className='w-48 bg-slate-100'>
-          {sessionData.map((item, idx) => (
-            <button
-              key={idx}
-              className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded btn-block w-full'
-              type='button'
-              onClick={() => handleCurrentSessionIdxChange(idx)}
-            >
-              {item.metadata.name} Names
-            </button>
-          ))}
+          <h2>Sessions</h2>
+          {sessionData &&
+            sessionData.map((item, idx) => (
+              <button
+                key={idx}
+                className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded btn-block w-full ${
+                  idx === currentSessionIdx && 'bg-blue-800'
+                }`}
+                type='button'
+                onClick={() => handleCurrentSessionIdxChange(idx)}
+              >
+                {item.metadata.name}
+              </button>
+            ))}
         </div>
         <div id='drawing'>
           <div id='drawing-savebar' className='flex mb-2 justify-left'>
@@ -434,7 +461,18 @@ const Canvas = (props) => {
         </div>
 
         {/* Session section */}
-        <div className='bg-red-300 w-48'>
+        <div className='bg-red-300 w-48 flex flex-col justify-start'>
+          <div>
+            {metadata && (
+              <input
+                type='text'
+                value={metadata.name}
+                onChange={(e) => handleUpdateMetadata(e)}
+                className='h-14'
+                placeholder='No Session Selected'
+              />
+            )}
+          </div>
           <button className='btn btn-white' onClick={handleDeleteSession}>
             Delete Session
           </button>
