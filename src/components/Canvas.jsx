@@ -9,7 +9,7 @@ import { is_mouse_in_circle, is_mouse_in_arrow, draw } from '../utils/geometry';
 
 import './canvas.css';
 
-const Canvas = (props) => {
+const Canvas = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [sessionData, setSessionData] = useState(null);
   const [metadata, setMetadata] = useState(null);
@@ -27,6 +27,9 @@ const Canvas = (props) => {
   const [currentShape, setCurrentShape] = useState(null);
 
   const canvasRef = useRef(null);
+
+  const canvasWidth = 736;
+  const canvasHeight = 1104;
 
   const tempActivities = [
     { name: 'Warmup' },
@@ -471,7 +474,8 @@ const Canvas = (props) => {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseOut={handleMouseOut}
-              {...props}
+              width={canvasWidth}
+              height={canvasHeight}
             />
           </div>
         </div>
