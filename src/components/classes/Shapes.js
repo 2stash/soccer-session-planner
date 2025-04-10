@@ -1,13 +1,19 @@
 export class Shape {
   constructor({
-    position = { startX: 0, startY: 0, endX: 0, endY: 0 },
+    startX = 0,
+    startY = 0,
+    endX = 0,
+    endY = 0,
     shape = 'circle',
     number = 0,
     color = 'rgba(255,0,0,1)',
     isMoving = false,
     radius = 25,
   }) {
-    this.position = position;
+    this.startX = startX;
+    this.startY = startY;
+    this.endX = endX;
+    this.endY = endY;
     this.number = number;
     this.color = color;
     this.isMoving = isMoving;

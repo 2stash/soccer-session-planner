@@ -20,13 +20,33 @@
         "coachingInteractionsWhat": "more and more stuff",
         "elements": [
           {
+            "color": "blue",
+            "isMoving": false,
+            "number": "4",
+            "radius": 25,
+            "shape": "triangle",
+            "startX": 200,
+            "startY": 400
+          },
+          {
             "color": "red",
             "isMoving": false,
             "number": "4",
-            "radius": 40,
-            "shape": "Triangle",
-            "startX": 400,
-            "startY": 400
+            "radius": 25,
+            "shape": "circle",
+            "startX": 300,
+            "startY": 300
+          },
+          {
+            "color": "black",
+            "isMoving": false,
+            "number": "4",
+            "radius": 25,
+            "shape": "arrow",
+            "startX": 50,
+            "startY": 50,
+            "endX": 250,
+            "endY": 250
           }
         ]
       },
@@ -47,9 +67,9 @@
             "color": "red",
             "isMoving": false,
             "number": "4",
-            "radius": 40,
-            "shape": "Triangle",
-            "startX": 400,
+            "radius": 25,
+            "shape": "triangle",
+            "startX": 100,
             "startY": 400
           }
         ]
@@ -77,12 +97,12 @@
         "coachingInteractionsWhat": "more and more stuff",
         "elements": [
           {
-            "color": "red",
+            "color": "blue",
             "isMoving": false,
             "number": "4",
-            "radius": 40,
-            "shape": "Triangle",
-            "startX": 400,
+            "radius": 25,
+            "shape": "triangle",
+            "startX": 200,
             "startY": 400
           }
         ]
@@ -101,12 +121,12 @@
         "coachingInteractionsWhat": "more and more stuff",
         "elements": [
           {
-            "color": "red",
+            "color": "blue",
             "isMoving": false,
             "number": "4",
-            "radius": 40,
-            "shape": "Triangle",
-            "startX": 400,
+            "radius": 25,
+            "shape": "triangle",
+            "startX": 100,
             "startY": 400
           }
         ]

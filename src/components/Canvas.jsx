@@ -9,15 +9,14 @@ import { is_mouse_in_circle, is_mouse_in_arrow, draw } from '../utils/geometry';
 
 import './canvas.css';
 
-const Canvas = () => {
-  const [dataLoaded, setDataLoaded] = useState(false);
-  const [sessionData, setSessionData] = useState(null);
-  const [metadata, setMetadata] = useState(null);
+const Canvas = ({ session, handleSessionUpdate }) => {
+  const [activityId, setActivityId] = useState(1);
+
   const [elements, setElements] = useState(null);
-  const [currentSessionIdx, setCurrentSessionIdx] = useState(0);
 
   const [offsets, setOffsets] = useState({});
   const [prevCordinates, setPrevCordinates] = useState(null);
+
   const [currentElementIndex, setCurrentElementIndex] = useState(null);
   const [isMovingExistingShape, setIsMovingExistingShape] = useState(null);
 
@@ -31,99 +30,104 @@ const Canvas = () => {
   const canvasWidth = 736;
   const canvasHeight = 1104;
 
-  const tempActivities = [
-    { name: 'Warmup' },
-    { name: 'Activity 1' },
-    { name: 'Activity 2' },
-  ];
+  // const tempActivities = [
+  //   { name: 'Warmup' },
+  //   { name: 'Activity 1' },
+  //   { name: 'Activity 2' },
+  // ];
 
-  const baseDataExample = [
-    {
-      activities: [
-        { name: 'Warmup', elements: [] },
-        { name: 'Activity 1', elements: [] },
-        { name: 'Activity 2', elements: [] },
-      ],
-      metadata: { name: 'New Session' },
-    },
-  ];
+  // const baseDataExample = [
+  //   {
+  //     activities: [
+  //       { name: 'Warmup', elements: [] },
+  //       { name: 'Activity 1', elements: [] },
+  //       { name: 'Activity 2', elements: [] },
+  //     ],
+  //     metadata: { name: 'New Session' },
+  //   },
+  // ];
 
-  const saveData = ({ data }) => {
-    console.log('sessionData ', sessionData);
-    if (data !== undefined) {
-      console.log('if = ', data);
-      setSessionData(data);
-      localStorage.setItem('soccer-planner', JSON.stringify(data));
-      return;
-    } else if (sessionData.length > 0) {
-      data = sessionData.map((item, idx) => {
-        console.log(idx, currentSessionIdx);
-        if (idx === currentSessionIdx) {
-          return { elements, metadata };
-        } else {
-          return item;
-        }
-      });
-    } else {
-      data = { metadata, elements };
-    }
-    setSessionData(data);
-    console.log('saving data, ', data);
-    localStorage.setItem('soccer-planner', JSON.stringify(data));
+  // const saveData = ({ data }) => {
+  //   if (data !== undefined) {
+  //     console.log('if = ', data);
+  //     setSessionData(data);
+  //     localStorage.setItem('soccer-planner', JSON.stringify(data));
+  //     return;
+  //   } else if (sessionData.length > 0) {
+  //     data = sessionData.map((item, idx) => {
+  //       console.log(idx, currentSessionIdx);
+  //       if (idx === currentSessionIdx) {
+  //         return { elements, metadata };
+  //       } else {
+  //         return item;
+  //       }
+  //     });
+  //   } else {
+  //     data = { metadata, elements };
+  //   }
+  //   setSessionData(data);
+  //   console.log('saving data, ', data);
+  //   localStorage.setItem('soccer-planner', JSON.stringify(data));
+  // };
+
+  // const handleCurrentSessionIdxChange = (idx) => {
+  //   console.log(idx);
+  //   setCurrentSessionIdx(idx);
+  //   setElements(sessionData[idx].elements);
+  //   setMetadata(sessionData[idx].metadata);
+  // };
+  const handleCurrentActvityIdChange = (id) => {
+    console.log(id);
+    setActivityId(id);
   };
 
-  const handleCurrentSessionIdxChange = (idx) => {
-    console.log(idx);
-    setCurrentSessionIdx(idx);
-    setElements(sessionData[idx].elements);
-    setMetadata(sessionData[idx].metadata);
-  };
+  // useEffect(() => {
+  //   // localStorage.removeItem('soccer-planner');
+
+  //   const localData = JSON.parse(localStorage.getItem('soccer-planner'));
+  //   console.log('localData ', localData);
+  //   let tempMetadata;
+
+  //   console.log('fetch and set localdata', localData);
+  //   if (localData) {
+  //     tempMetadata = localData;
+  //   } else {
+  //     tempMetadata = [{ elements: [], metadata: { name: 'New Session' } }];
+  //   }
+  //   console.log('session data =', tempMetadata);
+  //   setCurrentSessionIdx(0);
+  //   setMetadata(tempMetadata[currentSessionIdx].metadata);
+  //   setElements(tempMetadata[currentSessionIdx].elements);
+  //   setSessionData(tempMetadata);
+  //   setDataLoaded(true);
+  // }, []);
 
   useEffect(() => {
-    // localStorage.removeItem('soccer-planner');
-
-    const localData = JSON.parse(localStorage.getItem('soccer-planner'));
-    console.log('localData ', localData);
-    let tempMetadata;
-
-    console.log('fetch and set localdata', localData);
-    if (localData) {
-      tempMetadata = localData;
-    } else {
-      tempMetadata = [{ elements: [], metadata: { name: 'New Session' } }];
-    }
-    console.log('session data =', tempMetadata);
-    setCurrentSessionIdx(0);
-    setMetadata(tempMetadata[currentSessionIdx].metadata);
-    setElements(tempMetadata[currentSessionIdx].elements);
-    setSessionData(tempMetadata);
-    setDataLoaded(true);
-  }, []);
-
-  useEffect(() => {
+    console.log(session);
     drawShapes();
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentShape, elements, currentSessionIdx, sessionData]);
+  }, [currentShape, session, activityId]);
 
   const drawShapes = () => {
-    console.log(
-      'RELOADED: ',
-      'currentSessionIdx = ',
-      currentSessionIdx,
-      ' currentElementIndex = ',
-      currentElementIndex
-    );
+    console.log('drawing shapes');
+
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
     calculateOffsets(canvas);
 
-    if (dataLoaded) {
-      for (let element of elements) {
-        draw(element, context);
+    if (session) {
+      const activityToDraw = session.activities.filter(
+        (sess) => sess.id === activityId
+      );
+      if (activityToDraw) {
+        console.log(activityToDraw);
+        for (let element of activityToDraw[0].elements) {
+          draw(element, context);
+        }
       }
 
       if (currentShape) {
@@ -135,28 +139,26 @@ const Canvas = () => {
   const clearLocalStorage = () => {
     localStorage.removeItem('soccer-planner');
     const tempData = [{ elements: [], metadata: { name: 'New Session' } }];
-    setCurrentSessionIdx(0);
-    setMetadata(tempData[currentSessionIdx].metadata);
-    setElements(tempData[currentSessionIdx].elements);
-    setSessionData(tempData);
-    setDataLoaded(true);
+    // setCurrentSessionIdx(0);
+    // setMetadata(tempData[currentSessionIdx].metadata);
+    // setElements(tempData[currentSessionIdx].elements);
   };
 
-  const createNewSession = () => {
-    // saveData();
-    const data = [
-      ...sessionData,
-      {
-        elements: [],
-        metadata: { name: `New Session ${currentSessionIdx + 1}` },
-      },
-    ];
-    setSessionData(data);
-    setElements([]);
-    setMetadata({ name: `New Session ${currentSessionIdx + 1}` });
-    setCurrentSessionIdx(currentSessionIdx + 1);
-    saveData({ data });
-  };
+  // const createNewSession = () => {
+  //   // saveData();
+  //   const data = [
+  //     ...sessionData,
+  //     {
+  //       elements: [],
+  //       metadata: { name: `New Session ${currentSessionIdx + 1}` },
+  //     },
+  //   ];
+  //   setSessionData(data);
+  //   setElements([]);
+  //   setMetadata({ name: `New Session ${currentSessionIdx + 1}` });
+  //   setCurrentSessionIdx(currentSessionIdx + 1);
+  //   saveData({ data });
+  // };
 
   const calculateOffsets = (canvas) => {
     const canvas_offsets = canvas.getBoundingClientRect();
@@ -171,18 +173,16 @@ const Canvas = () => {
     const { clientX, clientY } = event;
     const translatedX = parseInt(clientX - offsets.offset_x);
     const translatedY = parseInt(clientY - offsets.offset_y);
-    setPrevCordinates({ position: { x: translatedX, y: translatedY } });
+    setPrevCordinates({ x: translatedX, y: translatedY });
     if (readyToDraw) {
       if (currentShapeType.shape === 'arrow') {
         if (currentShape === null) {
           setCurrentShape(
             new Shape({
-              position: {
-                startX: translatedX,
-                startY: translatedY,
-                endX: translatedX,
-                endY: translatedY,
-              },
+              startX: translatedX,
+              startY: translatedY,
+              endX: translatedX,
+              endY: translatedY,
               shape: currentShapeType.shape,
               color: currentShapeType.color,
               radius: 10,
@@ -193,10 +193,13 @@ const Canvas = () => {
           return;
         }
       }
-      setElements([...elements, currentShape]);
+      handleSessionUpdate(currentShape, session.id, activityId);
+      // setElements([...elements, currentShape]);
+
       setCurrentShape(
         new Shape({
-          position: { startX: translatedX, startY: translatedY },
+          startX: translatedX,
+          startY: translatedY,
           shape: currentShapeType.shape,
           color: currentShapeType.color,
         })
@@ -255,7 +258,8 @@ const Canvas = () => {
       }
 
       const currentShapePosition = new Shape({
-        position: { startX: translatedX, startY: translatedY },
+        startX: translatedX,
+        startY: translatedY,
         shape: currentShapeType.shape,
         color: currentShapeType.color,
       });
@@ -263,12 +267,10 @@ const Canvas = () => {
     } else if (drawingArrowEnd) {
       setCurrentShape(
         new Shape({
-          position: {
-            startX: currentShape.position.startX,
-            startY: currentShape.position.startY,
-            endX: translatedX,
-            endY: translatedY,
-          },
+          startX: currentShape.startX,
+          startY: currentShape.startY,
+          endX: translatedX,
+          endY: translatedY,
           shape: currentShapeType.shape,
           color: currentShapeType.color,
           radius: 10,
@@ -283,11 +285,8 @@ const Canvas = () => {
           if (idx === currentElementIndex) {
             return {
               ...item,
-              position: {
-                ...item.position,
-                startX: translatedX,
-                startY: translatedY,
-              },
+              startX: translatedX,
+              startY: translatedY,
             };
           }
           return item;
@@ -297,28 +296,25 @@ const Canvas = () => {
       isMovingExistingShape &&
       elements[currentElementIndex].shape === 'arrow'
     ) {
-      const dx = translatedX - prevCordinates.position.x;
-      const dy = translatedY - prevCordinates.position.y;
+      const dx = translatedX - prevCordinates.x;
+      const dy = translatedY - prevCordinates.y;
 
       setElements((prevItems) =>
         prevItems.map((item, idx) => {
           if (idx === currentElementIndex) {
             return {
               ...item,
-              position: {
-                ...item.position,
-                startX: item.position.startX + dx,
-                startY: item.position.startY + dy,
-                endX: item.position.endX + dx,
-                endY: item.position.endY + dy,
-              },
+              startX: item.startX + dx,
+              startY: item.startY + dy,
+              endX: item.endX + dx,
+              endY: item.endY + dy,
             };
           }
           return item;
         })
       );
     }
-    setPrevCordinates({ position: { x: translatedX, y: translatedY } });
+    setPrevCordinates({ x: translatedX, y: translatedY });
   };
   const handleMouseUp = (event) => {
     if (isMovingExistingShape) {
@@ -354,17 +350,17 @@ const Canvas = () => {
     }
   };
 
-  const handleDeleteSession = () => {
-    let data = sessionData.filter((session, idx) => currentSessionIdx !== idx);
-    setSessionData(data);
-    if (data.length === 0) {
-      data = [{ elements: [], metadata: { name: 'New Session' } }];
-    }
-    setMetadata(sessionData[0].metadata);
-    setElements(sessionData[0].elements);
-    handleCurrentSessionIdxChange(0);
-    saveData({ data });
-  };
+  // const handleDeleteSession = () => {
+  //   let data = sessionData.filter((session, idx) => currentSessionIdx !== idx);
+  //   setSessionData(data);
+  //   if (data.length === 0) {
+  //     data = [{ elements: [], metadata: { name: 'New Session' } }];
+  //   }
+  //   setMetadata(sessionData[0].metadata);
+  //   setElements(sessionData[0].elements);
+  //   handleCurrentSessionIdxChange(0);
+  //   saveData({ data });
+  // };
 
   const handleShapeSelected = (value) => {
     let shape;
@@ -375,67 +371,52 @@ const Canvas = () => {
     } else if (value === 'arrow') {
       shape = new Arrow();
     }
+    console.log('handle Selected Shape');
     setCurrentShapeType(shape);
     setReadyToDraw(true);
   };
 
   const resetMoveState = () => {
-    setElements((prevItems) =>
-      prevItems.map((item, idx) => {
-        if (idx === currentElementIndex) {
-          return {
-            ...item,
-            isMoving: false,
-          };
-        }
-        return item;
-      })
-    );
+    // TODO UPDATE
+    // setElements((prevItems) =>
+    //   prevItems.map((item, idx) => {
+    //     if (idx === currentElementIndex) {
+    //       return {
+    //         ...item,
+    //         isMoving: false,
+    //       };
+    //     }
+    //     return item;
+    //   })
+    // );
     setCurrentElementIndex(null);
   };
 
   const handleUpdateMetadata = (e) => {
     const name = e.target.value;
-    setMetadata({ name });
   };
 
+  const loading = () => {
+    if (!session) {
+      return false;
+    } else {
+      return true;
+    }
+  };
   return (
     <div>
       <div className='h-16'></div>
 
       {/* Drawing Section */}
       <div id='overall' className='flex'>
-        <div className='w-48 bg-slate-100'>
-          <h2>Sessions</h2>
-          {sessionData &&
-            sessionData.map((item, idx) => (
-              <button
-                key={idx}
-                className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded btn-block w-full ${
-                  idx === currentSessionIdx && 'bg-blue-800'
-                }`}
-                type='button'
-                onClick={() => handleCurrentSessionIdxChange(idx)}
-              >
-                {item.metadata.name}
-              </button>
-            ))}
-        </div>
         <div id='drawing'>
           <div id='drawing-savebar' className='flex mb-2 justify-left'>
             <button className='btn btn-white' onClick={clearLocalStorage}>
               Delete Localstorage Data
             </button>
-            <button className='btn btn-white ml-4' onClick={createNewSession}>
-              Create New Session
-            </button>
-            <button className='btn btn-white ml-4' onClick={saveData}>
-              Save
-            </button>
-            <button
-              className='btn-icon btn-white toolbutton ml-4'
-              onClick={handleDeleteElement}
-            >
+            <button className='btn btn-white ml-4'>Create New Session</button>
+            <button className='btn btn-white ml-4'>Save</button>
+            <button className='btn-icon btn-white toolbutton ml-4'>
               <FaRegTrashCan size={24} className='icon' />
             </button>
           </div>
@@ -487,10 +468,10 @@ const Canvas = () => {
               <label htmlFor='name' className='items-center text-3xl m-2'>
                 Session Title
               </label>
-              {metadata && (
+              {session && (
                 <input
                   type='text'
-                  value={metadata.name}
+                  value={session.metadata.name}
                   onChange={(e) => handleUpdateMetadata(e)}
                   className='m-2 p-2 h-10 border-bottom rounded-sm bg-gray-100'
                   placeholder='No Session Selected'
@@ -502,19 +483,21 @@ const Canvas = () => {
             <div className='mt-8'>
               <h2>Session Activities</h2>
               <div className='flex flex-col'>
-                {tempActivities.map((activity) => (
-                  <button key={activity.name} className='btn btn-white'>
-                    {activity.name}
-                  </button>
-                ))}
+                {session &&
+                  session.activities.map((activity) => (
+                    <button
+                      key={activity.type}
+                      className='btn btn-white'
+                      onClick={() => handleCurrentActvityIdChange(activity.id)}
+                    >
+                      {activity.type}
+                    </button>
+                  ))}
               </div>
             </div>
           </div>
 
-          <button
-            className='btn bg-red-500 hover:bg-red-700 m-2 text-white'
-            onClick={handleDeleteSession}
-          >
+          <button className='btn bg-red-500 hover:bg-red-700 m-2 text-white'>
             Delete Session
             {/* TODO: Add deletion check for production */}
           </button>

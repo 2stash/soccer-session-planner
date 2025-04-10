@@ -8,7 +8,29 @@ import Sidebar from './components/Sidebar';
 import DATA from './components/data/sampleData.json';
 
 function App() {
-  const [data, setData] = useState(DATA);
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    setData(DATA);
+  }, []);
+
+  const handleSessionUpdate = (currentShape, sessionId, activityId) => {
+    const newSession = data.filter((item) => item.id === sessionId);
+    for (const activity of newSession[0].activities) {
+      if (activity.id === activityId) {
+        activity.elements.push(currentShape);
+      }
+    }
+
+    const updatedSession = data.map((prevData) => {
+      if (prevData.id === sessionId) {
+        return newSession[0];
+      } else {
+        return prevData;
+      }
+    });
+    setData(updatedSession);
+  };
 
   return (
     <>
@@ -17,7 +39,15 @@ function App() {
         <Sidebar />
 
         <Routes>
-          <Route path='/session' element={<SessionInfo data={data} />} />
+          <Route
+            path='/session'
+            element={
+              <SessionInfo
+                data={data}
+                handleSessionUpdate={handleSessionUpdate}
+              />
+            }
+          />
         </Routes>
       </Router>
     </>

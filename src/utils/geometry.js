@@ -38,8 +38,8 @@ export function is_mouse_in_arrow(x, y, arrow) {
 }
 
 export function draw(element, context) {
-  const currentX = element.position.startX;
-  const currentY = element.position.startY;
+  const currentX = element.startX;
+  const currentY = element.startY;
   if (element.shape === 'circle') {
     if (element.isMoving) {
       drawMoving(context, currentX, currentY, element.radius);
@@ -72,8 +72,8 @@ export function draw(element, context) {
     if (element.isMoving) {
       drawMovingArrow(context, element);
     }
-    const x_center = element.position.endX;
-    const y_center = element.position.endY;
+    const x_center = element.endX;
+    const y_center = element.endY;
 
     let angle;
     let x;
@@ -83,17 +83,17 @@ export function draw(element, context) {
     context.fillStyle = element.color; // set arrow head color
     context.lineWidth = 5;
     context.beginPath();
-    context.moveTo(element.position.startX, element.position.startY);
+    context.moveTo(element.startX, element.startY);
 
-    context.lineTo(element.position.endX, element.position.endY);
+    context.lineTo(element.endX, element.endY);
     context.stroke();
     context.closePath();
 
     context.beginPath();
 
     angle = Math.atan2(
-      element.position.endY - element.position.startY,
-      element.position.endX - element.position.startX
+      element.endY - element.startY,
+      element.endX - element.startX
     );
     x = element.radius * Math.cos(angle) + x_center;
     y = element.radius * Math.sin(angle) + y_center;
