@@ -1,8 +1,8 @@
 export function is_mouse_in_circle(x, y, shape) {
-  let shape_left = shape.position.startX - shape.radius;
-  let shape_right = shape.position.startX + shape.radius;
-  let shape_top = shape.position.startY - shape.radius;
-  let shape_bottom = shape.position.startY + shape.radius;
+  let shape_left = shape.startX - shape.radius;
+  let shape_right = shape.startX + shape.radius;
+  let shape_top = shape.startY - shape.radius;
+  let shape_bottom = shape.startY + shape.radius;
   if (x > shape_left && x < shape_right && y > shape_top && y < shape_bottom) {
     return true;
   }
@@ -15,21 +15,13 @@ export function is_mouse_in_arrow(x, y, arrow) {
 
   const padding = 10; // padding to make arrow clicking on easier
   let shape_left =
-    arrow.position.startX < arrow.position.endX
-      ? arrow.position.startX - padding
-      : arrow.position.endX - padding;
+    arrow.startX < arrow.endX ? arrow.startX - padding : arrow.endX - padding;
   let shape_right =
-    arrow.position.startX > arrow.position.endX
-      ? arrow.position.startX + padding
-      : arrow.position.endX + padding;
+    arrow.startX > arrow.endX ? arrow.startX + padding : arrow.endX + padding;
   let shape_top =
-    arrow.position.startY < arrow.position.endY
-      ? arrow.position.startY - padding
-      : arrow.position.endY - padding;
+    arrow.startY < arrow.endY ? arrow.startY - padding : arrow.endY - padding;
   let shape_bottom =
-    arrow.position.startY > arrow.position.endY
-      ? arrow.position.startY + padding
-      : arrow.position.endY + padding;
+    arrow.startY > arrow.endY ? arrow.startY + padding : arrow.endY + padding;
 
   if (x > shape_left && x < shape_right && y > shape_top && y < shape_bottom) {
     return true;
@@ -127,14 +119,14 @@ function drawMoving(context, currentX, currentY, radius) {
 }
 
 function drawMovingArrow(context, element) {
-  let xLength = Math.abs(element.position.startX - element.position.endX);
-  let yLength = Math.abs(element.position.startY - element.position.endY);
+  let xLength = Math.abs(element.startX - element.endX);
+  let yLength = Math.abs(element.startY - element.endY);
   context.beginPath();
   context.strokeStyle = 'rgba(0,221,245,.5)';
 
   context.rect(
-    (element.position.startX + element.position.endX) / 2 - (30 + xLength) / 2,
-    (element.position.startY + element.position.endY) / 2 - (30 + yLength) / 2,
+    (element.startX + element.endX) / 2 - (30 + xLength) / 2,
+    (element.startY + element.endY) / 2 - (30 + yLength) / 2,
     xLength + 30,
     yLength + 30
   );

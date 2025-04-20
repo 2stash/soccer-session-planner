@@ -2,22 +2,21 @@ import React, { useState, useEffect } from 'react';
 import InfoCard from './InfoCard';
 import Canvas from './Canvas';
 
-const SessionInfo = ({ data, handleSessionUpdate }) => {
-  const [currentSession, setCurrentSession] = useState(null);
-  const [editSession, setEditSession] = useState(false);
-
-  const setToEditing = (id) => {
-    const session = data.filter((sess) => sess.id === id);
-    setCurrentSession(session[0]);
-    setEditSession(true);
-  };
-
+const SessionInfo = ({
+  data,
+  handleSessionUpdate,
+  handleElementMove,
+  currentSession,
+  setToEditing,
+  editSession,
+}) => {
   const display = () => {
     if (editSession) {
       return (
         <Canvas
           session={currentSession}
           handleSessionUpdate={handleSessionUpdate}
+          handleElementMove={handleElementMove}
         />
       );
     } else {

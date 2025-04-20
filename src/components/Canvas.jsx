@@ -9,7 +9,7 @@ import { is_mouse_in_circle, is_mouse_in_arrow, draw } from '../utils/geometry';
 
 import './canvas.css';
 
-const Canvas = ({ session, handleSessionUpdate }) => {
+const Canvas = ({ session, handleSessionUpdate, handleElementMove }) => {
   const [activityId, setActivityId] = useState(1);
 
   const [elements, setElements] = useState(null);
@@ -109,11 +109,9 @@ const Canvas = ({ session, handleSessionUpdate }) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [currentShape, session, activityId]);
+  }, [currentShape, session, activityId, handleElementMove]);
 
   const drawShapes = () => {
-    console.log('drawing shapes');
-
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -124,7 +122,6 @@ const Canvas = ({ session, handleSessionUpdate }) => {
         (sess) => sess.id === activityId
       );
       if (activityToDraw) {
-        console.log(activityToDraw);
         for (let element of activityToDraw[0].elements) {
           draw(element, context);
         }
@@ -194,7 +191,6 @@ const Canvas = ({ session, handleSessionUpdate }) => {
         }
       }
       handleSessionUpdate(currentShape, session.id, activityId);
-      // setElements([...elements, currentShape]);
 
       setCurrentShape(
         new Shape({
@@ -206,7 +202,7 @@ const Canvas = ({ session, handleSessionUpdate }) => {
       );
       return;
     } else if (drawingArrowEnd) {
-      setElements([...elements, currentShape]);
+      handleSessionUpdate(currentShape, session.id, activityId);
       setCurrentShape(null);
       setReadyToDraw(true);
       setDrawingArrowEnd(false);
@@ -214,9 +210,14 @@ const Canvas = ({ session, handleSessionUpdate }) => {
     }
     let startX = parseInt(translatedX);
     let startY = parseInt(translatedY);
+    console.log(startX, startY);
     let index = 0;
     let isMoving = false;
-    for (let element of elements) {
+    const currentActivity = session.activities.filter(
+      (activity) => activity.id === activityId
+    );
+    console.log(currentActivity);
+    for (let element of currentActivity[0].elements) {
       if (element.shape === 'triangle' || element.shape == 'circle') {
         if (is_mouse_in_circle(startX, startY, element)) {
           setCurrentElementIndex(index);
@@ -235,13 +236,16 @@ const Canvas = ({ session, handleSessionUpdate }) => {
       index++;
     }
     if (isMoving) {
-      const update = elements.map((prevElement, idx) => {
+      const update = currentActivity[0].elements.map((prevElement, idx) => {
         if (index === idx) {
           return { ...prevElement, isMoving: true };
         } else {
           return { ...prevElement, isMoving: false };
         }
       });
+      console.log(update);
+      handleElementMove(update, session.id, activityId);
+      // handleSessionUpdate(update, session.id, activityId);
       setElements(update);
     } else {
       resetMoveState();
@@ -280,18 +284,24 @@ const Canvas = ({ session, handleSessionUpdate }) => {
       isMovingExistingShape &&
       elements[currentElementIndex].shape !== 'arrow'
     ) {
-      setElements((prevItems) =>
-        prevItems.map((item, idx) => {
+      const currentActivity = session.activities.filter(
+        (activity) => activity.id === activityId
+      );
+      console.log(currentActivity);
+      const updatedElements = currentActivity[0].elements.map(
+        (element, idx) => {
           if (idx === currentElementIndex) {
             return {
-              ...item,
+              ...element,
               startX: translatedX,
               startY: translatedY,
             };
           }
-          return item;
-        })
+          return element;
+        }
       );
+
+      handleElementMove(updatedElements, session.id, activityId);
     } else if (
       isMovingExistingShape &&
       elements[currentElementIndex].shape === 'arrow'
@@ -299,20 +309,26 @@ const Canvas = ({ session, handleSessionUpdate }) => {
       const dx = translatedX - prevCordinates.x;
       const dy = translatedY - prevCordinates.y;
 
-      setElements((prevItems) =>
-        prevItems.map((item, idx) => {
+      const currentActivity = session.activities.filter(
+        (activity) => activity.id === activityId
+      );
+      console.log(currentActivity);
+      const updatedElements = currentActivity[0].elements.map(
+        (element, idx) => {
           if (idx === currentElementIndex) {
             return {
-              ...item,
-              startX: item.startX + dx,
-              startY: item.startY + dy,
-              endX: item.endX + dx,
-              endY: item.endY + dy,
+              ...element,
+              startX: element.startX + dx,
+              startY: element.startY + dy,
+              endX: element.endX + dx,
+              endY: element.endY + dy,
             };
           }
-          return item;
-        })
+          return element;
+        }
       );
+
+      handleElementMove(updatedElements, session.id, activityId);
     }
     setPrevCordinates({ x: translatedX, y: translatedY });
   };
@@ -339,16 +355,16 @@ const Canvas = ({ session, handleSessionUpdate }) => {
     }
   };
 
-  const handleDeleteElement = () => {
-    if (currentElementIndex !== null) {
-      setElements((prevItems) =>
-        prevItems.filter((item, idx) => idx !== currentElementIndex)
-      );
-      setReadyToDraw(false);
-      setCurrentShapeType(null);
-      setCurrentShape(null);
-    }
-  };
+  // const handleDeleteElement = () => {
+  //   if (currentElementIndex !== null) {
+  //     setElements((prevItems) =>
+  //       prevItems.filter((item, idx) => idx !== currentElementIndex)
+  //     );
+  //     setReadyToDraw(false);
+  //     setCurrentShapeType(null);
+  //     setCurrentShape(null);
+  //   }
+  // };
 
   // const handleDeleteSession = () => {
   //   let data = sessionData.filter((session, idx) => currentSessionIdx !== idx);

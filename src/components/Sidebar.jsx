@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from './Header';
 import { Link } from 'react-router-dom';
-const Sidebar = () => {
+const Sidebar = ({ setToEditing }) => {
   return (
     <>
       <aside
@@ -24,7 +24,12 @@ const Sidebar = () => {
                 to='/session'
                 className='flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group'
               >
-                <span className='flex-1 ms-3 whitespace-nowrap'>Sessions</span>
+                <span
+                  className='flex-1 ms-3 whitespace-nowrap'
+                  onClick={() => setToEditing(-1)}
+                >
+                  Sessions
+                </span>
               </Link>
             </li>
           </ul>
